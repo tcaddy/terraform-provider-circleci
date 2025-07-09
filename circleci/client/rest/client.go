@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -60,36 +61,50 @@ func (c *Client) NewRequest(method string, u *url.URL, payload interface{}) (req
 }
 
 func (c *Client) DoRequest(req *http.Request, resp interface{}) (statusCode int, err error) {
-	httpResp, err := c.client.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode >= 300 {
-		httpError := struct {
-			Message string `json:"message"`
-		}{}
-		err = json.NewDecoder(httpResp.Body).Decode(&httpError)
+	for {
+		httpResp, err := c.client.Do(req)
 		if err != nil {
-			return httpResp.StatusCode, err
+			return 0, err
 		}
-		return httpResp.StatusCode, &HTTPError{Code: httpResp.StatusCode, Message: httpError.Message}
-	}
 
-	if resp != nil {
-		// REST API v2 does not currently return Content-Type
+		if httpResp.StatusCode == http.StatusTooManyRequests {
+			httpResp.Body.Close()
+			rateLimitReset, err := strconv.ParseInt(httpResp.Header.Get("x-ratelimit-reset"), 10, 64)
+			if err != nil {
+				return httpResp.StatusCode, fmt.Errorf("could not parse rate limit reset header: %v", err)
+			}
 
-		// if !strings.Contains(httpResp.Header.Get("Content-Type"), "application/json") {
-		// 	return httpResp.StatusCode, errors.New("wrong content type received")
-		// }
-
-		err = json.NewDecoder(httpResp.Body).Decode(resp)
-		if err != nil {
-			return httpResp.StatusCode, fmt.Errorf("could not decode response: %v", err)
+			time.Sleep(time.Duration(rateLimitReset) * time.Second)
+			return c.DoRequest(req, resp)
 		}
+
+		defer httpResp.Body.Close()
+
+		if httpResp.StatusCode >= 300 {
+			httpError := struct {
+				Message string `json:"message"`
+			}{}
+			err = json.NewDecoder(httpResp.Body).Decode(&httpError)
+			if err != nil {
+				return httpResp.StatusCode, err
+			}
+			return httpResp.StatusCode, &HTTPError{Code: httpResp.StatusCode, Message: httpError.Message}
+		}
+
+		if resp != nil {
+			// REST API v2 does not currently return Content-Type
+
+			// if !strings.Contains(httpResp.Header.Get("Content-Type"), "application/json") {
+			// 	return httpResp.StatusCode, errors.New("wrong content type received")
+			// }
+
+			err = json.NewDecoder(httpResp.Body).Decode(resp)
+			if err != nil {
+				return httpResp.StatusCode, fmt.Errorf("could not decode response: %v", err)
+			}
+		}
+		return httpResp.StatusCode, nil
 	}
-	return httpResp.StatusCode, nil
 }
 
 type HTTPError struct {
