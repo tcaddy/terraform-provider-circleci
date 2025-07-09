@@ -65,7 +65,7 @@ func resourceCircleCICheckoutKeyCreate(d *schema.ResourceData, m interface{}) er
 
 	checkoutKey, err := c.CreateCheckoutKey(project, keyType)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to CreateCheckoutKey: %w", err)
 	}
 
 	id, _ := c.ComposeElementId([]string{project, checkoutKey.Fingerprint})

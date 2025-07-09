@@ -84,14 +84,14 @@ func (c *Client) CreateCheckoutKey(project, keyType string) (*CheckoutKey, error
 func (c *Client) DeleteCheckoutKey(project, fingerprint string) error {
 	slug, err := c.Slug(project)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to Slug: %w", err)
 	}
 
 	req, err := c.rest.NewRequest("DELETE", &url.URL{Path: fmt.Sprintf("project/%s/checkout-key/%s", slug, fingerprint)}, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to NewRequest: %w", err)
 	}
 
 	_, err = c.rest.DoRequest(req, nil)
-	return err
+	return fmt.Errorf("failed call to DoRequest: %w", err)
 }

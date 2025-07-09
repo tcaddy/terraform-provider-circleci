@@ -1,6 +1,8 @@
 package circleci
 
 import (
+	"fmt"
+
 	client "github.com/SectorLabs/terraform-provider-circleci/circleci/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -27,7 +29,7 @@ func dataSourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error 
 
 	ctx, err := c.GetContextByName(name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to GetContextByName: %w", err)
 	}
 
 	d.SetId(ctx.ID)

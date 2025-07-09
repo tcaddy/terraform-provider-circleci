@@ -72,7 +72,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 
 	has, err := c.HasProjectEnvironmentVariable(project, name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to HasProjectEnvironmentVariable: %w", err)
 	}
 
 	if has {

@@ -56,7 +56,7 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 			return nil
 		}
 
-		return err
+		return fmt.Errorf("failed call to GetContext: %w", err)
 	}
 
 	_ = d.Set("name", ctx.Name)

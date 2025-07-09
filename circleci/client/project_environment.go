@@ -46,7 +46,7 @@ func (c *Client) HasProjectEnvironmentVariable(project, name string) (bool, erro
 func (c *Client) CreateProjectEnvironmentVariable(project, name, value string) error {
 	slug, err := c.Slug(project)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to Slug: %w", err)
 	}
 
 	u := &url.URL{
@@ -58,18 +58,18 @@ func (c *Client) CreateProjectEnvironmentVariable(project, name, value string) e
 		Value: value,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to NewRequest: %w", err)
 	}
 
 	_, err = c.rest.DoRequest(req, nil)
-	return err
+	return fmt.Errorf("failed call to DoRequest: %w", err)
 }
 
 // DeleteProjectEnvironmentVariable deletes an existing project environment variable
 func (c *Client) DeleteProjectEnvironmentVariable(project, name string) error {
 	slug, err := c.Slug(project)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to Slug: %w", err)
 	}
 
 	u := &url.URL{
@@ -78,9 +78,9 @@ func (c *Client) DeleteProjectEnvironmentVariable(project, name string) error {
 
 	req, err := c.rest.NewRequest("DELETE", u, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed call to NewRequest: %w", err)
 	}
 
 	_, err = c.rest.DoRequest(req, nil)
-	return err
+	return fmt.Errorf("failed call to DoRequest: %w", err)
 }
